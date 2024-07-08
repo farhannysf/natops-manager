@@ -1,0 +1,6 @@
+discord.py
+google-cloud-compute
+google-cloud-storage
+google-cloud-logging
+paramiko
+python-a2s

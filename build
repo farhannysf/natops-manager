@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if (( $# != 2 )) || [[ "$1" != "dev" && "$1" != "prod" ]]; then
+    echo "Error: Invalid arguments."
+    echo
+    echo "Usage: $0 [dev|prod] [os instance name]"
+    exit 1
+fi
+
+TIER=$1 OS_USERNAME=$2 docker compose build --no-cache --build-arg OS_USERNAME=$2 && \
+TIER=$1 OS_USERNAME=$2 docker compose -p "natops-manager-$1" up -d --force-recreate && \
+docker image prune --filter label=com.natops-manager.build=$1 --force

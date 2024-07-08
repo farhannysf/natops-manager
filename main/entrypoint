@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -o allexport && \
+source /run/secrets/natops-manager-keys && \
+set +o allexport && \
+exec su -p ${OS_USERNAME} -c "python main.py"

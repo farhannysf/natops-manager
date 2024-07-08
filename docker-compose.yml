@@ -1,0 +1,19 @@
+services:
+  main:
+    build:
+      context: main
+      args:
+        OS_USERNAME: ${OS_USERNAME}
+      labels:
+        com.natops-manager.build: ${TIER}
+    secrets:
+      - natops-manager-keys
+    image: natops-manager-${TIER}:latest
+    container_name: natops-manager-${TIER}
+    restart: always
+    environment:
+      - OS_USERNAME=${OS_USERNAME}
+
+secrets:
+  natops-manager-keys:
+    file: ${TIER}.env
