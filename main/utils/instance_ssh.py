@@ -46,6 +46,7 @@ async def exponential_backoff_connect(discord_client, ssh_client, instance_ip):
 
 
 async def remote_exec(discord_client, instance_ip, commands):
+    console_log = None
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -80,10 +81,13 @@ async def remote_exec(discord_client, instance_ip, commands):
                 func=lambda: stdout.read().decode("utf-8").strip(),
             )
 
-            logger.info(output)
+            if command == "./read_console_log":
+                console_log = output
 
-            if command == "./get_start_timestamp":
-                session_manager.server_start_timestamp = output.split("=")[1]
+            else:
+                logger.info(output)
+                if command == "./get_start_timestamp":
+                    session_manager.server_start_timestamp = output.split("=")[1]
 
         else:
             error = await discord_client.loop.run_in_executor(
@@ -94,5 +98,8 @@ async def remote_exec(discord_client, instance_ip, commands):
             logger.error(f"Error executing '{command}': {error}")
 
     ssh_client.close()
+
+    if console_log:
+        return console_log
 
     return

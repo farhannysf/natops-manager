@@ -1,7 +1,7 @@
 import logging
 import discord
 import error_handling
-from bot_commands import session_manager, natops_help
+from bot_commands import session_manager, session_status, natops_help
 from discord.ext import commands
 from settings import BOT_NAME, BOT_TOKEN
 
@@ -24,6 +24,15 @@ async def on_ready():
 async def session(ctx, argument: str):
     if argument in ["start", "stop"]:
         await session_manager.logic(discord_client=client, ctx=ctx, argument=argument)
+
+    else:
+        raise discord.ext.commands.BadArgument
+
+
+@client.command(pass_context=True)
+async def status(ctx, argument: str):
+    if argument in ["player"]:
+        await session_status.logic(discord_client=client, ctx=ctx, argument=argument)
 
     else:
         raise discord.ext.commands.BadArgument

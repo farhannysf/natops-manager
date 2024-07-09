@@ -3,16 +3,15 @@ import logging
 from utils import (
     compute_engine,
     cloud_storage,
-    cloud_logging,
     instance_info,
-    console_log_parser,
-    log_enrichment,
+    connecting_event,
     message_formatting,
 )
 
 logger = logging.getLogger(__name__)
 server_start_timestamp = None
 session_startup_in_progress = set()
+session_running = set()
 
 
 async def logic(discord_client, ctx, argument: str):
@@ -64,6 +63,7 @@ async def logic(discord_client, ctx, argument: str):
 
                 await ctx.send(embed=discord_embed)
                 session_startup_in_progress.discard(instance["instance_name"])
+                session_running.add(instance["instance_name"])
 
                 message = "NATOPS session started."
                 logger_info_message = (
@@ -152,65 +152,39 @@ async def logic(discord_client, ctx, argument: str):
                 )
 
                 message = "Parsing NATOPS console log..."
+                logger_info_message = (
+                    await message_formatting.create_logger_info_message(
+                        command=argument,
+                        message=message,
+                        instance_name=instance["instance_name"],
+                        zone=instance["zone"],
+                    )
+                )
+
                 logger.info(logger_info_message)
                 await ctx.send(message)
 
-                console_log_data = await console_log_parser.parse_log(
-                    log_file=console_log_file,
-                    start_date=server_start_datetime["start_date_object"],
+                event_log = await connecting_event.construct_event_log(
+                    discord_client=discord_client,
+                    argument=argument,
+                    instance=instance,
+                    console_log_file=console_log_file,
+                    server_start_date=server_start_datetime["start_date_object"],
                 )
 
-                if len(console_log_data) == 0:
-                    message = "No player connected."
-                    logger_info_message = (
-                        await message_formatting.create_logger_info_message(
-                            command=argument,
-                            message=message,
-                            instance_name=instance["instance_name"],
-                            zone=instance["zone"],
-                        )
-                    )
+                if isinstance(event_log, str):
+                    if event_log == "No player connected.":
+                        message = event_log
+                        return await ctx.send(message)
 
-                    logger.info(logger_info_message)
-                    return await ctx.send(message)
-
-                message = "Fetching IP address from cloud logging..."
-                logger_info_message = (
-                    await message_formatting.create_logger_info_message(
-                        command=argument,
-                        message=message,
-                        instance_name=instance["instance_name"],
-                        zone=instance["zone"],
-                    )
-                )
-
-                logger.info(logger_info_message)
-
-                ip_log_data = await cloud_logging.create_ip_log_data(
-                    discord_client=discord_client, console_log_data=console_log_data
-                )
-
-                message = "Enriching log data..."
-                logger_info_message = (
-                    await message_formatting.create_logger_info_message(
-                        command=argument,
-                        message=message,
-                        instance_name=instance["instance_name"],
-                        zone=instance["zone"],
-                    )
-                )
-
-                logger.info(logger_info_message)
-
-                enriched_log_data = await log_enrichment.enrich_data(ip_log_data)
-                for event in enriched_log_data:
+                for event in event_log:
                     embed = await message_formatting.create_log_event_embed(
                         log_data=event
                     )
 
                     await ctx.send(embed=embed)
 
-                message = f"{len(enriched_log_data)} events data sent."
+                message = f"{len(event_log)} events data sent."
                 logger_info_message = (
                     await message_formatting.create_logger_info_message(
                         command=argument,

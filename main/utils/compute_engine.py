@@ -3,6 +3,8 @@ import logging
 from google.cloud import compute_v1
 from settings import GOOGLE_COMPUTE_ENGINE, GOOGLE_CLOUD_PROJECT
 from utils import instance_ssh
+from bot_commands import session_manager
+from io import StringIO
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +185,7 @@ async def stop(discord_client, instance):
         return message
 
     elif str(instance_info.status) == str(compute_v1.Instance.Status.RUNNING.name):
+        session_manager.session_running.discard(instance_name)
         server_shutdown_in_progress.add(instance_name)
         try:
             commands = ["./stop"]
@@ -221,3 +224,27 @@ async def stop(discord_client, instance):
         }
 
         return message
+
+
+async def read_console_log(discord_client, instance):
+    zone = instance["zone"]
+    instance_name = instance["instance_name"]
+    instance_info = await discord_client.loop.run_in_executor(
+        executor=None,
+        func=lambda: compute_client.get(
+            project=GOOGLE_CLOUD_PROJECT, zone=zone, instance=instance_name
+        ),
+    )
+
+    instance_ip = instance_info.network_interfaces[0].access_configs[0].nat_i_p
+    console_log = await instance_ssh.remote_exec(
+        discord_client=discord_client,
+        instance_ip=instance_ip,
+        commands=["./read_console_log"],
+    )
+
+    console_log_file = await discord_client.loop.run_in_executor(
+        executor=None, func=lambda: StringIO(console_log)
+    )
+
+    return console_log_file
