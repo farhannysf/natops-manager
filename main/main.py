@@ -31,7 +31,7 @@ async def session(ctx, argument: str):
 
 @client.command(pass_context=True)
 async def status(ctx, argument: str):
-    if argument in ["player"]:
+    if argument in ["player", "server"]:
         await session_status.logic(discord_client=client, ctx=ctx, argument=argument)
 
     else:

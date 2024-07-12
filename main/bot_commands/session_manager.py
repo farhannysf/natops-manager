@@ -3,7 +3,7 @@ import logging
 from utils import (
     compute_engine,
     cloud_storage,
-    instance_info,
+    natops_session,
     connecting_event,
     message_formatting,
 )
@@ -57,11 +57,11 @@ async def logic(discord_client, ctx, argument: str):
 
                 logger.info(logger_info_message)
 
-                discord_embed = await instance_info.query_natops_session(
+                natops_embed = await natops_session.query_natops_session(
                     instance_ip=start_result["instance_ip"]
                 )
 
-                await ctx.send(embed=discord_embed)
+                await ctx.send(embed=natops_embed["session_embed"])
                 session_startup_in_progress.discard(instance["instance_name"])
                 session_running.add(instance["instance_name"])
 
@@ -77,7 +77,7 @@ async def logic(discord_client, ctx, argument: str):
 
                 logger.info(logger_info_message)
 
-        return
+            return
 
     elif argument == "stop":
         async with ctx.typing():
@@ -95,7 +95,9 @@ async def logic(discord_client, ctx, argument: str):
                 logger.info(logger_info_message)
 
                 message = f'`{instance["instance_name"]}` in `{instance["zone"]}` is still starting up NATOPS session.'
-                return await ctx.send(message)
+                await ctx.send(message)
+
+                return
 
             stop_result = await compute_engine.stop(
                 discord_client=discord_client, instance=instance
@@ -175,7 +177,9 @@ async def logic(discord_client, ctx, argument: str):
                 if isinstance(event_log, str):
                     if event_log == "No player connected.":
                         message = event_log
-                        return await ctx.send(message)
+                        await ctx.send(message)
+
+                        return
 
                 for event in event_log:
                     embed = await message_formatting.create_log_event_embed(
@@ -184,7 +188,7 @@ async def logic(discord_client, ctx, argument: str):
 
                     await ctx.send(embed=embed)
 
-                message = f"{len(event_log)} events data sent."
+                message = f"{len(event_log)} event(s) data sent."
                 logger_info_message = (
                     await message_formatting.create_logger_info_message(
                         command=argument,
@@ -196,4 +200,4 @@ async def logic(discord_client, ctx, argument: str):
 
                 logger.info(logger_info_message)
 
-        return
+            return
