@@ -58,7 +58,7 @@ async def logic(discord_client, ctx, argument: str):
                 )
 
                 logger.info(logger_info_message)
-                await ctx.send(message)
+                await ctx.send(content=message)
 
                 event_log = await connecting_event.construct_event_log(
                     discord_client=discord_client,
@@ -71,7 +71,7 @@ async def logic(discord_client, ctx, argument: str):
                 if isinstance(event_log, str):
                     if event_log == "No player connected.":
                         message = event_log
-                        await ctx.send(message)
+                        await ctx.send(content=message)
 
                         return
 
@@ -103,7 +103,7 @@ async def logic(discord_client, ctx, argument: str):
                 )
 
                 logger.info(message["logger_info_message"])
-                await ctx.send(message["message"])
+                await ctx.send(content=message["message"])
 
                 return
 
@@ -129,7 +129,7 @@ async def logic(discord_client, ctx, argument: str):
                 )
 
                 logger.info(message["logger_info_message"])
-                await ctx.send(message["message"])
+                await ctx.send(content=message["message"])
 
                 return
 

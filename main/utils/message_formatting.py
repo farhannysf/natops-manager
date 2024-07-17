@@ -2,8 +2,17 @@ import logging
 
 from datetime import datetime
 from discord import Embed
+from settings import AUTHORIZED_CHANNELS
 
 logger = logging.getLogger(__name__)
+
+
+async def authorize_discord_channels(discord_client):
+    channels = [
+        discord_client.get_channel(channel_id) for channel_id in AUTHORIZED_CHANNELS
+    ]
+
+    return channels
 
 
 async def create_logger_info_message(command, message, instance_name, zone):

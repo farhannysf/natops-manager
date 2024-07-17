@@ -4,15 +4,19 @@ services:
       context: main
       args:
         OS_USERNAME: ${OS_USERNAME}
+        WEBHOOK_PORT: ${WEBHOOK_PORT}
       labels:
         com.natops-manager.build: ${TIER}
     secrets:
       - natops-manager-keys
     image: natops-manager-${TIER}:latest
     container_name: natops-manager-${TIER}
+    ports:
+      - "${WEBHOOK_PORT}:${WEBHOOK_PORT}"
     restart: always
     environment:
       - OS_USERNAME=${OS_USERNAME}
+      - WEBHOOK_PORT=${WEBHOOK_PORT}
 
 secrets:
   natops-manager-keys:

@@ -9,7 +9,8 @@ WORKDIR /app
 COPY requirements.txt .
 COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt \
-    && chmod +x entrypoint
+RUN chown -R ${OS_USERNAME}: /app && \
+    pip install --no-cache-dir -r requirements.txt && \
+    chmod +x /app/entrypoint
 
 ENTRYPOINT [ "./entrypoint" ]

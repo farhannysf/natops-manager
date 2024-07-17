@@ -1,11 +1,13 @@
 import logging
+import asyncio
 import discord
 import error_handling
+import webserver
 
 from bot_commands import session_manager, session_status, natops_help
 from utils import compute_engine, message_formatting
 from discord.ext import commands, tasks
-from settings import BOT_NAME, BOT_TOKEN
+from settings import BOT_TOKEN
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,10 +15,11 @@ logger = logging.getLogger(__name__)
 intents = discord.Intents.default()
 intents.message_content = True
 client = commands.Bot(command_prefix="!natops-", help_command=None, intents=intents)
+task_memory = {}
 
 
 @tasks.loop(seconds=300)
-async def health_check_worker(discord_client):
+async def instance_health_check_worker(discord_client):
     instance = await compute_engine.get_instance(discord_client=discord_client)
     message = "Health check..."
     logger_info_message = await message_formatting.create_logger_info_message(
@@ -31,24 +34,35 @@ async def health_check_worker(discord_client):
         discord_client=discord_client, instance=instance, flag="query-natops"
     )
 
-    instance_attributes["instance"] = instance["instance_name"]
-    instance_attributes["zone"] = instance["zone"]
-
     return instance_attributes
+
+
+@tasks.loop(seconds=82800)
+async def webhook_rotation_worker(task_memory, discord_client):
+    webhook_server = task_memory.get("webhook_server")
+    if webhook_server:
+        message = "[service-worker] Rotating webhook server..."
+        logger.info(message)
+
+        webhook_server.close()
+        await webhook_server.wait_closed()
+        del task_memory["webhook_server"]
+
+    await webserver.webhook_health_check(
+        task_memory=task_memory, discord_client=discord_client
+    )
 
 
 @client.event
 async def on_ready():
-    instance_attributes = await health_check_worker(discord_client=client)
-    instance_status = " ".join(
-        f"{key}: {value}" for key, value in instance_attributes.items()
-    )
+    if not instance_health_check_worker.is_running():
+        instance_health_check_worker.start(discord_client=client)
 
-    if not health_check_worker.is_running():
-        health_check_worker.start(discord_client=client)
+    if not webhook_rotation_worker.is_running():
+        webhook_rotation_worker.start(task_memory=task_memory, discord_client=client)
 
     logger.info(
-        f"{BOT_NAME} running as {client.user.name} ({client.user.id})\n{instance_status}\n------"
+        f"natops-manager running as {client.user.name} ({client.user.id})\n------"
     )
 
     activity = discord.Game("!natops-session")

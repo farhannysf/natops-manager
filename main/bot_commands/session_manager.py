@@ -37,7 +37,7 @@ async def logic(discord_client, ctx, argument: str):
                 logger.info(logger_info_message)
 
             message = start_result["message"]
-            await ctx.send(message)
+            await ctx.send(content=message)
 
             if start_result.get("status") == "success" and start_result.get(
                 "instance_ip"
@@ -95,7 +95,7 @@ async def logic(discord_client, ctx, argument: str):
                 logger.info(logger_info_message)
 
                 message = f'`{instance["instance_name"]}` in `{instance["zone"]}` is still starting up NATOPS session.'
-                await ctx.send(message)
+                await ctx.send(content=message)
 
                 return
 
@@ -117,7 +117,7 @@ async def logic(discord_client, ctx, argument: str):
                 logger.info(logger_info_message)
 
             message = stop_result["message"]
-            await ctx.send(message)
+            await ctx.send(content=message)
 
             if stop_result.get("status") == "success":
                 message = "NATOPS instance stopped."
@@ -164,7 +164,7 @@ async def logic(discord_client, ctx, argument: str):
                 )
 
                 logger.info(logger_info_message)
-                await ctx.send(message)
+                await ctx.send(content=message)
 
                 event_log = await connecting_event.construct_event_log(
                     discord_client=discord_client,
@@ -177,7 +177,7 @@ async def logic(discord_client, ctx, argument: str):
                 if isinstance(event_log, str):
                     if event_log == "No player connected.":
                         message = event_log
-                        await ctx.send(message)
+                        await ctx.send(content=message)
 
                         return
 

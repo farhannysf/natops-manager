@@ -22,13 +22,18 @@ def load_ssh_key(ssh_key_string):
 
 
 MAINTAINER_ID = environ["MAINTAINER_ID"]
-BOT_NAME = environ["BOT_NAME"]
 BOT_TOKEN = environ["BOT_TOKEN"]
 GOOGLE_CLOUD_PROJECT = environ["GOOGLE_CLOUD_PROJECT"]
 FIREWALL_NAME = environ["FIREWALL_NAME"]
 SSH_KEY = load_ssh_key(ssh_key_string=environ["SSH_KEY"])
 IPINFO_TOKEN = environ["IPINFO_TOKEN"]
 VPNIO_TOKEN = environ["VPNIO_TOKEN"]
+WEBHOOK_PORT = environ["WEBHOOK_PORT"]
+WEBHOOK_AUTH_USERNAME = environ["WEBHOOK_AUTH_USERNAME"]
+WEBHOOK_AUTH_PASSWORD = environ["WEBHOOK_AUTH_PASSWORD"]
+AUTHORIZED_CHANNELS = [
+    int(channel) for channel in environ["AUTHORIZED_CHANNELS"].split(",")
+]
 
 gcp_credentials = [
     "GOOGLE_COMPUTE_ENGINE",

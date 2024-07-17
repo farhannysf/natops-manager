@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 
 async def construct_event_log(
-    discord_client, argument, instance, console_log_file, server_start_date
+    discord_client, argument, instance, console_log_file, server_start_date, flag=None
 ):
 
     console_log_data = await console_log_parser.parse_log(
@@ -24,6 +24,9 @@ async def construct_event_log(
 
         logger.info(logger_info_message)
         return message
+
+    if flag == "webhook":
+        console_log_data = [console_log_data[-1]]
 
     message = "Fetching IP address from cloud logging..."
     logger_info_message = await message_formatting.create_logger_info_message(
