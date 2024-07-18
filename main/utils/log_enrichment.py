@@ -1,8 +1,8 @@
-from yarl import URL
-
 import logging
 import aiohttp
-from asyncio import TimeoutError
+import asyncio
+
+from yarl import URL
 from settings import IPINFO_TOKEN, VPNIO_TOKEN
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ async def fetch_url(session, url, params=None):
     except aiohttp.ClientError as e:
         logger.error(f"ClientError: {e}")
 
-    except TimeoutError as e:
+    except asyncio.TimeoutError as e:
         logger.error(f"TimeoutError: {e}")
 
     return None
@@ -71,14 +71,23 @@ async def get_obfuscation_flags(ip_address):
         return None
 
 
+async def enrich_event(event):
+    ip_address = event.get("IP Address")
+    if ip_address:
+        attributes_data = await asyncio.gather(
+            get_ip_attributes(ip_address), get_obfuscation_flags(ip_address)
+        )
+
+        ip_attributes = attributes_data[0]
+        event.update(ip_attributes)
+
+        obfuscation_attributes = attributes_data[1]
+        event.update(obfuscation_attributes)
+
+
 async def enrich_data(ip_log_data):
-    for event in ip_log_data:
-        ip_address = event.get("IP Address")
-        if ip_address:
-            ip_attributes = await get_ip_attributes(ip_address)
-            event.update(ip_attributes)
-            obfuscation_attributes = await get_obfuscation_flags(ip_address)
-            event.update(obfuscation_attributes)
+    tasks = [enrich_event(event) for event in ip_log_data]
+    await asyncio.gather(*tasks)
 
     enriched_log_data = ip_log_data
     return enriched_log_data

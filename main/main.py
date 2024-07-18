@@ -1,5 +1,4 @@
 import logging
-import asyncio
 import discord
 import error_handling
 import webserver
